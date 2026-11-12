@@ -101,7 +101,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v4</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -1102,12 +1102,18 @@ function press(k,on){
  netSendInput();
 }
 document.querySelectorAll('.pb').forEach(el=>{
- const k=el.dataset.k;
- el.addEventListener('pointerdown',e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){};el.classList.add('down');press(k,1)});
- const up=e=>{if(!el.classList.contains('down'))return;el.classList.remove('down');press(k,0)};
- el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);
+ const k=el.dataset.k,ids=new Set();
+ const down=()=>{if(el.classList.contains('down'))return;el.classList.add('down');press(k,1)};
+ const up=()=>{if(!el.classList.contains('down'))return;el.classList.remove('down');press(k,0)};
+ // iPhoneはtouchイベントを直接止めないとダブルタップでズームする
+ el.addEventListener('touchstart',e=>{e.preventDefault();ac();for(const t of e.changedTouches)ids.add(t.identifier);down()},{passive:false});
+ const tend=e=>{e.preventDefault();for(const t of e.changedTouches)ids.delete(t.identifier);if(!ids.size)up()};
+ el.addEventListener('touchend',tend,{passive:false});el.addEventListener('touchcancel',tend,{passive:false});
+ el.addEventListener('mousedown',e=>{e.preventDefault();down();const mu=()=>{up();removeEventListener('mouseup',mu)};addEventListener('mouseup',mu)});
  el.addEventListener('contextmenu',e=>e.preventDefault());
 });
+// バトル画面はどこを触ってもズームしない（結果画面のボタン以外）
+$('#scr-battle').addEventListener('touchstart',e=>{if(!(e.target.closest&&e.target.closest('#bover')))e.preventDefault()},{passive:false});
 const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyJ:'a',KeyK:'b',KeyL:'g',KeyI:'s',KeyU:'s'};
 addEventListener('keydown',e=>{if(cur!=='battle')return;const k=KM[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;press(k,1)});
 addEventListener('keyup',e=>{const k=KM[e.code];if(!k)return;press(k,0)});
@@ -1118,7 +1124,7 @@ document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
 document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 let lastTouchEnd=0;
-document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouchEnd<400&&!(e.target.closest&&e.target.closest('input,textarea,select')))e.preventDefault();lastTouchEnd=now},{passive:false});
+document.addEventListener('touchend',e=>{const now=Date.now();const t=e.target.closest&&e.target.closest('button,input,textarea,select,summary,a,label,.chip,.sw,.tcard,.ocard,canvas');if(!t&&now-lastTouchEnd<400)e.preventDefault();lastTouchEnd=now},{passive:false});
 document.addEventListener('touchmove',e=>{if(cur==='battle'||e.touches.length>1)e.preventDefault()},{passive:false});
 
 /* ================= CPU選択 ================= */
