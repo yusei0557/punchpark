@@ -66,10 +66,12 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 #bquit{position:absolute;right:6px;top:calc(50% - 16px);width:32px;height:32px;border-radius:50%;border:2px solid var(--ink);background:#fff8;color:var(--ink);font-size:16px;z-index:5;display:none}
 #pad{flex:1;display:flex;align-items:center;justify-content:space-between;padding:10px 14px max(14px,env(safe-area-inset-bottom));gap:10px;min-height:190px;background:repeating-linear-gradient(45deg,#1a1228 0 8px,#160f22 8px 16px);touch-action:none}
 .dpad{display:flex;gap:10px}
-.acts{display:grid;grid-template-columns:repeat(2,78px);gap:10px}
-.pb{width:78px;height:78px;border-radius:50%;border:4px solid var(--ink);box-shadow:0 5px 0 var(--ink);font-size:18px;font-weight:bold;color:var(--ink);touch-action:none;display:flex;align-items:center;justify-content:center;line-height:1.05;text-align:center;font-family:"DotGothic16"}
+.acts{display:grid;grid-template-columns:repeat(3,66px);gap:8px}
+.pb{width:66px;height:66px;border-radius:50%;border:4px solid var(--ink);box-shadow:0 5px 0 var(--ink);font-size:18px;font-weight:bold;color:var(--ink);touch-action:none;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.05;text-align:center;font-family:"DotGothic16"}
 .pb.down{transform:translateY(4px);box-shadow:0 1px 0 var(--ink);filter:brightness(1.2)}
-.pb.mv{background:#d8d4e8;width:74px;height:74px;font-size:26px}
+.pb.mv{background:#d8d4e8;width:66px;height:66px;font-size:24px}
+.pb.c{background:#7ad070}
+.dpad{gap:8px!important}
 .pb.a{background:#ffd83a}.pb.b{background:#f07038}.pb.g{background:#5ab8f0}.pb.s{background:#9a8ab0;color:#fff}
 .pb.s.ready{background:#ff3a7a;animation:glow .5s infinite alternate}
 @keyframes glow{to{box-shadow:0 5px 0 var(--ink),0 0 18px #ff9ac0}}
@@ -80,8 +82,8 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
  #scr-battle{flex-direction:row;justify-content:center;align-items:center}
  #bwrap{height:100%;width:auto;max-width:100%}
  #pad{position:absolute;left:0;right:0;bottom:0;background:none;pointer-events:none;min-height:0;padding:8px 16px}
- #pad .pb{pointer-events:auto;opacity:.6;width:62px;height:62px;font-size:15px}
- .acts{grid-template-columns:repeat(2,62px)}
+ #pad .pb{pointer-events:auto;opacity:.6;width:58px;height:58px;font-size:14px}
+ .acts{grid-template-columns:repeat(3,58px)}
  #bover{position:fixed}
  #keys{display:none!important}
 }
@@ -101,7 +103,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v6</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v7</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -188,11 +190,11 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
  <div id="bwrap"><canvas id="cv"></canvas>
   <div id="bover"><div class="card" id="bovc"></div></div>
  </div>
- <div id="keys">← → 移動 / J 弱 / K 強(長押しでタメ) / L ガード(長押し) / I 必殺</div>
+ <div id="keys">← → 移動 / J 弱 / K 強(長押しでタメ) / O つかみ / L ガード(長押し) / I 必殺</div>
  <div id="pad">
   <div class="dpad"><div class="pb mv" data-k="l">◀</div><div class="pb mv" data-k="r">▶</div></div>
   <div class="acts">
-   <div class="pb a" data-k="a">弱</div><div class="pb b" data-k="b">強<br><small style="font-size:10px">長押しタメ</small></div>
+   <div class="pb a" data-k="a">弱</div><div class="pb b" data-k="b">強<br><small style="font-size:9px">長押しタメ</small></div><div class="pb c" data-k="c">つかみ</div>
    <div class="pb g" data-k="g">ガード</div><div class="pb s" data-k="s" id="spbtn">必殺</div>
   </div>
  </div>
@@ -224,6 +226,7 @@ const TYPES={
 const MOVES={
  L:{su:5,ac:3,re:9,dmg:6,st:10,rng:29,kb:1.6,hs:16,bs:10,gd:10,stop:4},
  H:{su:12,ac:4,re:19,dmg:13,st:24,rng:34,kb:3.6,hs:22,bs:14,gd:26,stop:7},
+ G:{su:8,ac:3,re:24,dmg:8,st:12,rng:25,kb:9,hs:34,bs:0,gd:0,stop:6},
  C:{su:7,ac:5,re:20,dmg:12,st:0,rng:36,kb:3,hs:22,bs:16,gd:30,stop:6},
  S:{su:10,ac:6,re:18,dmg:26,st:0,rng:32,kb:6,hs:40,bs:16,gd:45,stop:10,dash:3}
 };
@@ -384,13 +387,16 @@ function getPose(s){
  switch(s.state){
   case 'idle':P.bob=Math.floor(fr/18)%2;P.bf=[6,-23+P.bob];P.ff=[11,-19+P.bob];if(s.chg>0){P.lean=-2;P.ff=[1,-22];P.bf=[5,-20];P.chg=s.chg}break;
   case 'walk':P.walk=Math.floor(t/7)%4;P.bob=P.walk%2;P.bf=[6,-23+P.bob];P.ff=[11,-19+P.bob];if(s.chg>0){P.lean=-2;P.ff=[1,-22];P.bf=[5,-20];P.chg=s.chg}break;
-  case 'guard':case 'bstun':P.lean=-1;P.bf=[6,-29];P.ff=[9,-25];P.guard=1;if(s.state==='bstun')P.shake=t%4<2?1:-1;break;
+  case 'guard':case 'bstun':P.lean=-1;P.bf=[6,-29];P.ff=[9,-25];P.guard=1;if(s.gw&&s.state==='guard')P.walk=Math.floor(fr/9)%4;if(s.state==='bstun')P.shake=t%4<2?1:-1;break;
   case 'atk':{const mv=MOVES[s.mv]||MOVES.L,a0=mv.su,a1=a0+mv.ac,k=clamp((t-a1)/mv.re,0,1);
    if(s.mv==='L'){if(t<a0)P.ff=[8,-20];else if(t<a1){P.ff=[22,-21];P.ext=1}else P.ff=[Math.round(22-11*k),-21+Math.round(2*k)]}
    else if(s.mv==='H'){if(t<a0){P.lean=-2;P.ff=[3,-22];P.bf=[8,-25]}else if(t<a1){P.lean=3;P.ff=[27,-22];P.ext=2;P.bf=[4,-20]}else{P.lean=Math.round(3-3*k);P.ff=[Math.round(27-16*k),-22+Math.round(3*k)]}}
+   else if(s.mv==='G'){if(t<a0){P.lean=1;P.ff=[13,-19];P.bf=[11,-23]}else if(t<a1){P.lean=2;P.ff=[18,-20];P.bf=[16,-24];P.ext=1}else{P.ff=[Math.round(18-7*k),-20];P.bf=[Math.round(16-10*k),-24+Math.round(k)]}}
    else if(s.mv==='C'){if(t<a0){P.lean=-2;P.ff=[1,-22];P.chg=s.cl||.5}else if(t<a1){P.lean=4;P.ff=[29,-22];P.ext=(s.cl||0)>.6?3:2;P.bf=[3,-19]}else{P.lean=Math.round(4-4*k);P.ff=[Math.round(29-18*k),-22+Math.round(3*k)]}}
    else{if(t<a0){P.lean=-3;P.ff=[0,-23];P.bf=[4,-20];P.charge=1}else if(t<a1){P.lean=4;P.ff=[30,-22];P.ext=3;P.bf=[3,-19]}else{P.lean=Math.round(4-4*k);P.ff=[Math.round(30-19*k),-22+Math.round(3*k)]}}
    break}
+  case 'throw':if(t<16){P.lean=1;P.ff=[14,-21+((t>>2)%2)];P.bf=[13,-25]}else{const k3=clamp((t-16)/14,0,1);P.lean=3-Math.round(3*k3);P.ff=[Math.round(22-10*k3),-22];P.bf=[Math.round(20-12*k3),-25];P.ext=t<20?2:0}break;
+  case 'held':P.lean=-2;P.head=[-1,0];P.bf=[2,-26];P.ff=[5,-17];P.shake=(t>>1)%2?1:-1;break;
   case 'hit':P.lean=-3;P.head=[-2,1];P.bf=[0,-27];P.ff=[3,-16];P.shake=t<8?(t%2?1:-1):0;break;
   case 'gbreak':P.lean=Math.round(Math.sin(fr/7)*1.5)-1;P.bf=[3,-16];P.ff=[6,-15];P.dizzy=1;break;
   case 'ko':if(t<14){P.lean=-3;P.head=[-2,1];P.bf=[0,-27];P.ff=[3,-16]}else P.ko=1;break;
@@ -846,6 +852,7 @@ function sfx(k){if(!AC)return;try{switch(k){
  case 'gb':tone(1200,200,.25,'square',.1);noise(.25,.3,3000);break;
  case 'ko':tone(400,40,.8,'sawtooth',.15);noise(.5,.3,600);break;
  case 'sflash':tone(200,1600,.4,'triangle',.12);break;
+ case 'gr':noise(.12,.25,600);tone(160,120,.1,'square',.08);break;
  case 'cst':tone(180,360,.25,'triangle',.06);break;
  case 'nost':tone(300,200,.1,'square',.05);break;
  case 'round':tone(660,660,.12,'square',.08);tone(880,880,.18,'square',.08,.13);break;
@@ -889,8 +896,9 @@ function doHit(G,i){
 function stepFighter(G,i,inp,act){
  const f=G.f[i],o=G.f[1-i];
  if(f.la===undefined){f.la=inp.a;f.lb=inp.b;f.ls=inp.s}
- const pa=inp.a>f.la,pb=inp.b>f.lb,ps=inp.s>f.ls;f.la=inp.a;f.lb=inp.b;f.ls=inp.s;
- if(act){if(ps)f.buf={k:'S',t:10};else if(pb){if((f.state==='idle'||f.state==='walk')&&!f.bt)f.bt=1;else f.buf={k:'H',t:10}}else if(pa)f.buf={k:'L',t:10}}
+ if(f.lc===undefined)f.lc=inp.c||0;
+ const pa=inp.a>f.la,pb=inp.b>f.lb,ps=inp.s>f.ls,pc=(inp.c||0)>f.lc;f.la=inp.a;f.lb=inp.b;f.ls=inp.s;f.lc=inp.c||0;
+ if(act){if(ps)f.buf={k:'S',t:10};else if(pb){if((f.state==='idle'||f.state==='walk')&&!f.bt)f.bt=1;else f.buf={k:'H',t:10}}else if(pc)f.buf={k:'G',t:10};else if(pa)f.buf={k:'L',t:10}}
  if(f.state!=='idle'&&f.state!=='walk'){f.bt=0;f.chg=0}
  if(f.buf&&--f.buf.t<=0)f.buf=null;
  f.t++;if(f.noSt>0)f.noSt--;
@@ -904,11 +912,22 @@ function stepFighter(G,i,inp,act){
   case 'hit':if(f.t>=f.stun){f.state='idle';f.t=0;f.combo=0}return;
   case 'bstun':if(f.t>=f.stun){f.state=(act&&inp.g&&!f.broken)?'guard':'idle';f.t=0}return;
   case 'gbreak':if(f.t>=f.stun){f.state='idle';f.t=0}return;
+  case 'held':if(o.state!=='throw'||f.t>40){f.state='idle';f.t=0}return;
+  case 'throw':{
+   if(o.state==='held')o.x=f.x+f.face*15;
+   if(f.t===16&&o.state==='held'){const dmg=MOVES.G.dmg*f.atk*(isLow(f)?LOW_MUL:1)*(isLow(o)?LOW_MUL:1);
+    o.hp-=dmg;o.state='hit';o.t=0;o.stun=MOVES.G.hs;o.vx=f.face*MOVES.G.kb;o.combo=1;o.sp=Math.min(100,o.sp+dmg*2.4);G.hitstop=MOVES.G.stop;
+    pushEv(G,{k:'H',s:i,x:Math.round(f.x+f.face*14),y:GY-22});
+    if(o.hp<=0){o.hp=0;o.state='ko';o.t=0;o.vx=f.face*4;G.phase='ko';G.pt=0;G.rw=i;G.hitstop=34;pushEv(G,{k:'ko',s:i,x:o.x,y:GY-24})}}
+   if(f.t>=30){f.state='idle';f.t=0}
+   return}
   case 'atk':{
    const mv=MOVES[f.mv],a0=mv.su,a1=a0+mv.ac,end=a1+mv.re;
    if(f.mv==='S'&&f.t>=a0-4&&f.t<a1&&Math.abs(o.x-f.x)>18)f.x+=f.face*mv.dash;
    if(f.mv==='C'&&f.cl>.6&&f.t>=a0-3&&f.t<a1&&Math.abs(o.x-f.x)>18)f.x+=f.face*2.2;
-   if(f.t>=a0&&f.t<a1&&!f.hitDone&&G.phase==='fight'){const dx=(o.x-f.x)*f.face;if(dx>0&&dx<=mv.rng+(f.mv==='S'?6:0)&&o.state!=='ko')doHit(G,i)}
+   if(f.t>=a0&&f.t<a1&&!f.hitDone&&G.phase==='fight'){const dx=(o.x-f.x)*f.face;
+    if(f.mv==='G'){if(dx>0&&dx<=mv.rng+4&&!['ko','hit','held','throw'].includes(o.state)){f.hitDone=true;f.state='throw';f.t=0;o.state='held';o.t=0;o.vx=0;o.bt=0;o.chg=0;o.buf=null;o.face=-f.face;pushEv(G,{k:'gr',s:i,x:Math.round((f.x+o.x)/2),y:GY-24})}}
+    else if(dx>0&&dx<=mv.rng+(f.mv==='S'?6:0)&&o.state!=='ko')doHit(G,i)}
    if(act&&f.landed&&f.t>=a1&&f.buf&&((f.mv==='L'&&(f.buf.k==='H'||f.buf.k==='S'))||(f.mv==='H'&&f.buf.k==='S'))){const k=f.buf.k;f.buf=null;if(tryStart(G,i,k))return}
    if(f.t>=end){f.state='idle';f.t=0}
    return}
@@ -922,8 +941,9 @@ function stepFighter(G,i,inp,act){
   else{const c=f.chg;f.bt=0;f.chg=0;if(c>=CHG_MIN){startCharge(G,i,c/CHG_MAX);return}if(tryStart(G,i,'H'))return}
  }
  if(f.buf){const k=f.buf.k;f.buf=null;if(tryStart(G,i,k)){f.bt=0;f.chg=0;return}}
- if(inp.g&&!f.broken){if(f.state!=='guard'){f.state='guard';f.t=0}f.gd-=.32;
+ if(inp.g&&!f.broken){if(f.state!=='guard'){f.state='guard';f.t=0}f.gd-=.32;{const gdir=(inp.r?1:0)-(inp.l?1:0);f.gw=gdir?1:0;if(gdir)f.x+=gdir*(gdir===f.face?.7:.6)}
   if(f.gd<=0){f.gd=0;f.broken=true;f.state='gbreak';f.t=0;f.stun=80;pushEv(G,{k:'gb',s:i,x:f.x,y:GY-34})}return}
+ f.gw=0;
  const dir=(inp.r?1:0)-(inp.l?1:0);
  if(dir){f.x+=dir*(dir===f.face?1.25:.95)*(f.chg>0?.6:1);if(f.state!=='walk'){f.state='walk';f.t=0}}
  else if(f.state!=='idle'){f.state='idle';f.t=0}
@@ -931,7 +951,7 @@ function stepFighter(G,i,inp,act){
 function separate(G){
  const a=G.f[0],b=G.f[1],MIN=18;
  for(const f of G.f)f.x=clamp(f.x,12,W-12);
- if(a.state==='ko'||b.state==='ko')return;
+ if(a.state==='ko'||b.state==='ko'||a.state==='held'||b.state==='held')return;
  const MAXD=200;if(Math.abs(b.x-a.x)>MAXD){const s=b.x>a.x?1:-1;const mid=(a.x+b.x)/2;a.x=mid-s*MAXD/2;b.x=mid+s*MAXD/2}
  let d=b.x-a.x;if(Math.abs(d)<MIN){const s=d>=0?1:-1;const mid=(a.x+b.x)/2;a.x=mid-s*MIN/2;b.x=mid+s*MIN/2;
   if(a.x<12){a.x=12;b.x=12+s*MIN}if(b.x<12){b.x=12;a.x=12-s*MIN}if(a.x>W-12){a.x=W-12;b.x=W-12+s*MIN}if(b.x>W-12){b.x=W-12;a.x=W-12-s*MIN}}
@@ -946,7 +966,7 @@ function afterRound(G){
   G.f.forEach((f,i)=>{if(f.state!=='ko'||G.result===i){f.state=G.result===i?'win':G.result===-1?'idle':'lose';f.t=0}})}
  else{resetRound(G);pushEv(G,{k:'round',s:0,x:0,y:0})}
 }
-const NOIN={l:0,r:0,g:0,a:0,b:0,s:0,bh:0};
+const NOIN={l:0,r:0,g:0,a:0,b:0,s:0,bh:0,c:0};
 function stepGame(G,inp){
  if(G.hitstop>0){G.hitstop--;return}
  if(G.flash>0){G.flash--;return}
@@ -978,6 +998,7 @@ function cpuThink(G,i,ai){
  inp.l=inp.r=inp.g=0;
  const tw=o.x>f.x?'r':'l',aw=tw==='r'?'l':'r';
  if(threat&&!f.broken&&f.gd>25&&rnd()<L.guard){inp.g=1;ai.cd=Math.max(10,ai.cd>>1);return inp}
+ if(d<26&&f.st>=12&&f.state!=='atk'&&(o.state==='guard'?rnd()<L.smart*.8:rnd()<.12)){inp.c=(inp.c||0)+1;return inp}
  if(o.state==='gbreak'&&d<36){if(f.sp>=100)inp.s++;else if(f.st>=24)inp.b++;else inp.a++;return inp}
  if(f.sp>=100&&d<40&&rnd()<.5){inp.s++;return inp}
  if(isLow(f)&&rnd()<L.smart){inp[aw]=1;return inp}
@@ -992,13 +1013,13 @@ function cpuThink(G,i,ai){
 
 /* ================= バトル管理 ================= */
 let B=null;
-const LI={l:0,r:0,g:0,a:0,b:0,s:0,bh:0};
+const LI={l:0,r:0,g:0,a:0,b:0,s:0,bh:0,c:0};
 const cv=$('#cv'),cx=cv.getContext('2d');
 let DS=3,VW=W,camX=0;
 function resizeBattle(){VW=innerHeight>innerWidth?240:W;$('#bwrap').style.aspectRatio=VW+'/'+H;const r=$('#bwrap').getBoundingClientRect();const dpr=window.devicePixelRatio||1;DS=clamp(Math.ceil(r.width*dpr/VW),1,6);cv.width=VW*DS;cv.height=H*DS}
 addEventListener('resize',()=>{if(cur==='battle')resizeBattle()});
 function startBattle(mode,looks,opt={}){
- B={mode,looks,G:newGame(looks),me:mode==='guest'?1:0,ai:mode==='cpu'?{lvl:CPU_LV[opt.lv],lvKey:opt.lv,cd:20,ct:0,inp:{l:0,r:0,g:0,a:0,b:0,s:0,bh:0}}:null,fx:[],lastEv:0,shake:0,white:0,doneMid:-1,lost:0,snapRef:null,sendT:0};
+ B={mode,looks,G:newGame(looks),me:mode==='guest'?1:0,ai:mode==='cpu'?{lvl:CPU_LV[opt.lv],lvKey:opt.lv,cd:20,ct:0,inp:{l:0,r:0,g:0,a:0,b:0,s:0,bh:0,c:0}}:null,fx:[],lastEv:0,shake:0,white:0,doneMid:-1,lost:0,snapRef:null,sendT:0};
  for(const k in LI)LI[k]=0;
  $('#bover').style.display='none';show('battle');resizeBattle();
 }
@@ -1022,7 +1043,7 @@ function tick(){
   const ok=netOpen();
   if(!ok){if(++B.lost>120&&!B.disc){B.disc=1;showDisconnect()}}else B.lost=0;
   const gi=ok&&Array.isArray(N.gin)?N.gin:null;
-  const ginp=gi?{l:+!!gi[0],r:+!!gi[1],g:+!!gi[2],a:+gi[3]||0,b:+gi[4]||0,s:+gi[5]||0,bh:+!!gi[6]}:NOIN;
+  const ginp=gi?{l:+!!gi[0],r:+!!gi[1],g:+!!gi[2],a:+gi[3]||0,b:+gi[4]||0,s:+gi[5]||0,bh:+!!gi[6],c:+gi[7]||0}:NOIN;
   if(!B.disc)stepGame(G,[LI,ginp]);processEvents(G);
   if(++B.sendT>=2){B.sendT=0;netSendState(G)}
  }else if(B.mode==='guest'){
@@ -1073,7 +1094,7 @@ function render(){
  for(const f of G.f){f.dx=B.mode==='guest'?(Math.abs(f.x-f.dx)>30?f.x:f.dx+(f.x-f.dx)*.5):f.x;cx.fillStyle='rgba(20,60,20,.35)';cx.fillRect(Math.round(f.dx)-(f.state==='ko'&&f.t>14?20:9),GY-1,f.state==='ko'&&f.t>14?42:18,3)}
  // キャラ（攻撃中を前に）
  const ord=[0,1].sort((a,b)=>(G.f[a].state==='atk')-(G.f[b].state==='atk'));
- for(const i of ord){const f=G.f[i];drawFighter(cx,B.looks[i],{x:f.dx,y:GY,face:f.face,state:f.state,t:f.t,mv:f.mv,fr,low:isLow(f),chg:f.chg/CHG_MAX,cl:f.cl});
+ for(const i of ord){const f=G.f[i];drawFighter(cx,B.looks[i],{x:f.dx,y:GY,face:f.face,state:f.state,t:f.t,mv:f.mv,fr,low:isLow(f),chg:f.chg/CHG_MAX,cl:f.cl,gw:f.gw});
   if(f.chg>0){const w=Math.round(22*f.chg/CHG_MAX),x0=Math.round(f.dx)-11;px(cx,x0-1,GY-62,24,4,OL);px(cx,x0,GY-61,22,2,'#3a2a4a');px(cx,x0,GY-61,w,2,f.chg>=CHG_MAX?((fr>>2)%2?'#fff':'#ff4a8a'):f.chg>=CHG_MIN?'#ffd060':'#a0a0b0')}}
  // パーティクル
  for(const p of B.fx){if(p.txt)continue;if(p.ring){const r=Math.round((p.big?26:12)*(1-p.l/(p.big?16:10)))+2;cx.globalAlpha=p.l/12;cx.fillStyle=p.c;for(let a=0;a<40;a++){const an=a/40*Math.PI*2;cx.fillRect(Math.round(p.x+Math.cos(an)*r),Math.round(p.y+Math.sin(an)*r),1,1)}cx.globalAlpha=1;continue}
@@ -1132,7 +1153,7 @@ document.querySelectorAll('.pb').forEach(el=>{
 });
 // バトル画面はどこを触ってもズームしない（結果画面のボタン以外）
 $('#scr-battle').addEventListener('touchstart',e=>{if(!(e.target.closest&&e.target.closest('#bover')))e.preventDefault()},{passive:false});
-const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyJ:'a',KeyK:'b',KeyL:'g',KeyI:'s',KeyU:'s'};
+const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyJ:'a',KeyK:'b',KeyL:'g',KeyI:'s',KeyU:'s',KeyO:'c'};
 addEventListener('keydown',e=>{if(cur!=='battle')return;const k=KM[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;press(k,1)});
 addEventListener('keyup',e=>{const k=KM[e.code];if(!k)return;press(k,0)});
 if(matchMedia('(hover:hover) and (pointer:fine)').matches)$('#keys').style.display='block';
@@ -1225,12 +1246,12 @@ function onNetData(conn,m){
  }
 }
 function netOpen(){return !!(N.conn&&N.conn.open)}
-const STATES=['idle','walk','guard','bstun','atk','hit','gbreak','ko','win','lose'];
+const STATES=['idle','walk','guard','bstun','atk','hit','gbreak','ko','win','lose','throw','held'];
 function netSendState(G){
  if(!netOpen())return;
  const gs={ph:G.phase,pt:G.pt,tm:G.timer,rd:G.round,w:G.wins,fl:G.flash,fo:G.fo,rw:G.rw,res:G.result,mid:G.mid,
   cs:G.cs?[G.cs.i,G.cs.n,G.cs.t]:null,ev:G.evs.slice(-6).map(e=>[e.id,e.k,Math.round(e.x),Math.round(e.y),e.s]),
-  f:G.f.map(f=>[r1(f.x),f.face,r1(f.hp),r1(f.hpT),r1(f.st),r1(f.gd),r1(f.sp),f.state,f.t,f.mv||'',f.combo,f.broken?1:0,f.chg,r1(f.cl||0)])};
+  f:G.f.map(f=>[r1(f.x),f.face,r1(f.hp),r1(f.hpT),r1(f.st),r1(f.gd),r1(f.sp),f.state,f.t,f.mv||'',f.combo,f.broken?1:0,f.chg,r1(f.cl||0),f.gw?1:0])};
  try{N.conn.send({t:'gs',s:gs})}catch(e){}
 }
 function applySnap(G,s){
@@ -1242,10 +1263,10 @@ function applySnap(G,s){
   if(Array.isArray(s.ev))G.evs=s.ev.filter(Array.isArray).map(e=>({id:+e[0]||0,k:String(e[1]),x:+e[2]||0,y:+e[3]||0,s:e[4]?1:0}));
   if(Array.isArray(s.f))s.f.forEach((a,i)=>{if(i>1||!Array.isArray(a))return;const f=G.f[i];
    f.x=clamp(+a[0]||0,0,W);f.face=a[1]<0?-1:1;f.hp=+a[2]||0;f.hpT=+a[3]||0;f.st=+a[4]||0;f.gd=+a[5]||0;f.sp=+a[6]||0;
-   f.state=STATES.includes(a[7])?a[7]:'idle';f.t=+a[8]||0;f.mv=MOVES[a[9]]?a[9]:null;f.combo=+a[10]||0;f.broken=!!a[11];f.chg=clamp(+a[12]||0,0,CHG_MAX);f.cl=clamp(+a[13]||0,0,1)});
+   f.state=STATES.includes(a[7])?a[7]:'idle';f.t=+a[8]||0;f.mv=MOVES[a[9]]?a[9]:null;f.combo=+a[10]||0;f.broken=!!a[11];f.chg=clamp(+a[12]||0,0,CHG_MAX);f.cl=clamp(+a[13]||0,0,1);f.gw=a[14]?1:0});
  }catch(e){}
 }
-function netSendInput(){if(!B||B.mode!=='guest'||!netOpen())return;try{N.conn.send({t:'in',v:[LI.l,LI.r,LI.g,LI.a,LI.b,LI.s,LI.bh]})}catch(e){}}
+function netSendInput(){if(!B||B.mode!=='guest'||!netOpen())return;try{N.conn.send({t:'in',v:[LI.l,LI.r,LI.g,LI.a,LI.b,LI.s,LI.bh,LI.c]})}catch(e){}}
 function netLeave(){
  clearTimeout(N.joinT);
  const c=N.conn,p=N.peer;N.conn=null;N.peer=null;N.role=null;N.gin=null;N.gs=null;
