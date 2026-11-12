@@ -10,8 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1a1020;--bg:#2a2140;--card:#3a2f58;--hi:#ffd83a;--red:#e8484a;--grn:#4ccf6a;--blu:#4a8cf0;--txt:#fff6e8}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:"DotGothic16",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{-webkit-touch-callout:none;-webkit-text-size-adjust:100%;margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:"DotGothic16",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 button{font-family:inherit}
 .scr{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .scr.on{display:flex}
@@ -59,7 +59,8 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 .spin{display:inline-block;width:16px;height:16px;border:3px solid var(--hi);border-right-color:transparent;border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px}
 @keyframes sp{to{transform:rotate(360deg)}}
 /* battle */
-#scr-battle{background:#0c0814;overflow:hidden}
+#scr-battle{background:#0c0814;overflow:hidden;touch-action:none}
+#scr-battle *{touch-action:none}
 #bwrap{position:relative;width:100%;aspect-ratio:16/9;flex:none;background:#000}
 #cv{width:100%;height:100%;display:block}
 #bquit{position:absolute;right:6px;top:calc(50% - 16px);width:32px;height:32px;border-radius:50%;border:2px solid var(--ink);background:#fff8;color:var(--ink);font-size:16px;z-index:5;display:none}
@@ -184,7 +185,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- BATTLE -->
 <section id="scr-battle" class="scr">
- <div id="bwrap"><canvas id="cv"></canvas><button id="bquit">✕</button>
+ <div id="bwrap"><canvas id="cv"></canvas>
   <div id="bover"><div class="card" id="bovc"></div></div>
  </div>
  <div id="keys">← → 移動 / J 弱 / K 強 / L ガード(長押し) / I 必殺</div>
@@ -982,9 +983,8 @@ addEventListener('resize',()=>{if(cur==='battle')resizeBattle()});
 function startBattle(mode,looks,opt={}){
  B={mode,looks,G:newGame(looks),me:mode==='guest'?1:0,ai:mode==='cpu'?{lvl:CPU_LV[opt.lv],lvKey:opt.lv,cd:20,ct:0,inp:{l:0,r:0,g:0,a:0,b:0,s:0}}:null,fx:[],lastEv:0,shake:0,white:0,doneMid:-1,lost:0,snapRef:null,sendT:0};
  for(const k in LI)LI[k]=0;
- $('#bover').style.display='none';show('battle');resizeBattle();$('#bquit').style.display='block';
+ $('#bover').style.display='none';show('battle');resizeBattle();
 }
-$('#bquit').onclick=async()=>{const i=await modal(B&&B.mode==='cpu'?'たたかいをやめてホームにもどる？':'対戦をぬけますか？',[{t:'つづける',c:'wht'},{t:'やめる',c:'red'}]);if(i===1)quitBattle()};
 function quitBattle(){if(B&&B.mode!=='cpu')netLeave();B=null;show('home')}
 function processEvents(G){
  for(const e of G.evs){if(e.id<=B.lastEv)continue;B.lastEv=e.id;
@@ -1112,6 +1112,14 @@ const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyJ:'a',KeyK:'b',KeyL:
 addEventListener('keydown',e=>{if(cur!=='battle')return;const k=KM[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;press(k,1)});
 addEventListener('keyup',e=>{const k=KM[e.code];if(!k)return;press(k,0)});
 if(matchMedia('(hover:hover) and (pointer:fine)').matches)$('#keys').style.display='block';
+
+/* ================= ズーム防止（iPhone） ================= */
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+let lastTouchEnd=0;
+document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouchEnd<400&&!(e.target.closest&&e.target.closest('input,textarea,select')))e.preventDefault();lastTouchEnd=now},{passive:false});
+document.addEventListener('touchmove',e=>{if(cur==='battle'||e.touches.length>1)e.preventDefault()},{passive:false});
 
 /* ================= CPU選択 ================= */
 document.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{const me=myLook();if(!me)return;const m=MANNE_LOOK();m.name='マネキン('+CPU_LV[b.dataset.lv].name+')';startBattle('cpu',[me,m],{lv:b.dataset.lv})});
