@@ -101,7 +101,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v4</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v5</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -224,7 +224,7 @@ const TYPES={
 const MOVES={
  L:{su:5,ac:3,re:9,dmg:6,st:10,rng:29,kb:1.6,hs:16,bs:10,gd:10,stop:4},
  H:{su:12,ac:4,re:19,dmg:13,st:24,rng:34,kb:3.6,hs:22,bs:14,gd:26,stop:7},
- S:{su:14,ac:12,re:26,dmg:26,st:0,rng:30,kb:6,hs:44,bs:18,gd:45,stop:12,dash:3.4}
+ S:{su:10,ac:6,re:18,dmg:26,st:0,rng:32,kb:6,hs:40,bs:16,gd:45,stop:10,dash:3}
 };
 const LOW_ST=.3, LOW_MUL=.75; // スタミナ30%未満で与ダメ・被ダメ×0.75
 const OUTFITS=[
@@ -857,7 +857,7 @@ function isLow(f){return f.st<f.maxSt*LOW_ST}
 function resetRound(G){[116,204].forEach((x,i)=>{const f=G.f[i];Object.assign(f,{x,dx:x,face:i?-1:1,hp:f.maxHp,hpT:f.maxHp,st:f.maxSt,gd:100,state:'idle',t:0,mv:null,vx:0,rd:0,buf:null,broken:false,combo:0,noSt:0})});G.phase='intro';G.pt=0;G.timer=60;G.rw=-1;G.cs=null}
 function tryStart(G,i,k){
  const f=G.f[i],mv=MOVES[k];
- if(k==='S'){if(f.sp<100)return false;f.sp=0;G.flash=30;G.fo=i;pushEv(G,{k:'sflash',s:i,x:f.x,y:GY-26})}
+ if(k==='S'){if(f.sp<100)return false;f.sp=0;pushEv(G,{k:'sflash',s:i,x:f.x,y:GY-26})}
  else{if(f.st<mv.st){if(f.noSt<=0)pushEv(G,{k:'nost',s:i,x:f.x,y:GY-50});f.noSt=40;return false}f.st-=mv.st;f.rd=24}
  f.state='atk';f.mv=k;f.t=0;f.hitDone=false;f.landed=false;return true;
 }
@@ -1084,7 +1084,6 @@ function render(){
  if(B.me===0)T('YOU',8,42,4,'#ffd83a','left');else T('YOU',V-8,42,4,'#ffd83a','right');
  for(const p of B.fx)if(p.txt){cx.globalAlpha=Math.min(1,p.l/20);T(p.txt,clamp(p.x+ox,30,V-30),p.y,p.jp?7:5,p.c,'center',p.jp);cx.globalAlpha=1}
  if(G.cs)T(G.cs.n+' HIT!',G.cs.i===0?36:V-36,60,8,'#ffd83a');
- if(G.flash>0)T('ばくれつパンチ！',C,60,V<W?11:13,'#ffe060','center',1);
  // 中央メッセージ
  const MS=V<W?.8:1;
  if(G.phase==='intro'){if(G.pt<58)T('ROUND '+G.round,C,82,16*MS,'#fff');else T('FIGHT!',C,82,20*MS,'#ffd83a')}
