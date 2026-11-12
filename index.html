@@ -1163,9 +1163,18 @@ async function joinRoom(code){
  clearTimeout(N.joinT);N.joinT=setTimeout(()=>{if(N.role==='g'&&!B){setOStat('つながらなかった…相手と同じWi-Fiにするか、もう一回ためしてね');netLeave()}},15000);
 }
 function packFull(ch){return {n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.photo||undefined}}
+// 写真は大きいので12KBずつ分けて送る（iPhoneは大きいメッセージを送れない）
+function sendLook(conn){const ch=packFull(S.data.char);const ph=ch.ph;delete ch.ph;const CH=12000,n=ph?Math.ceil(ph.length/CH):0;
+ try{conn.send({t:'hello',ch,pn:n});for(let i=0;i<n;i++)conn.send({t:'ph',i,n,d:ph.slice(i*CH,(i+1)*CH)})}catch(e){}}
+function onPhotoPart(m){
+ if(!Number.isInteger(m.i)||!Number.isInteger(m.n)||m.n<1||m.n>60||m.i<0||m.i>=m.n||typeof m.d!=='string')return;
+ if(!N.phBuf||N.phBuf.length!==m.n)N.phBuf=new Array(m.n);N.phBuf[m.i]=m.d;
+ for(let i=0;i<m.n;i++)if(typeof N.phBuf[i]!=='string')return;
+ const u=N.phBuf.join('');N.phBuf=null;if(validImg(u)){N.oppPhoto=u;if(N.oppLook)N.oppLook.photo=getImg(u)}
+}
 function setupConn(conn){
- N.conn=conn;N.gin=null;N.gs=null;
- conn.on('open',()=>{if(N.role==='g')conn.send({t:'hello',ch:packFull(S.data.char)})});
+ N.conn=conn;N.gin=null;N.gs=null;N.phBuf=null;N.oppLook=null;N.oppPhoto=null;
+ conn.on('open',()=>{if(N.role==='g')sendLook(conn)});
  conn.on('data',m=>onNetData(conn,m));
  conn.on('close',()=>{if(N.conn===conn)N.conn=null});
  conn.on('error',()=>{});
@@ -1173,10 +1182,12 @@ function setupConn(conn){
 function onNetData(conn,m){
  if(conn!==N.conn||!m||typeof m!=='object')return;
  if(N.role==='h'){
-  if(m.t==='hello'&&!B){const gl=unpackLook(m.ch);if(!gl)return;conn.send({t:'hello',ch:packFull(S.data.char)});startBattle('host',[myLook(),gl])}
+  if(m.t==='hello'&&!B){const gl=unpackLook(m.ch);if(!gl)return;N.oppLook=gl;if(N.oppPhoto)gl.photo=getImg(N.oppPhoto);sendLook(conn);startBattle('host',[myLook(),gl])}
+  else if(m.t==='ph')onPhotoPart(m);
   else if(m.t==='in'&&Array.isArray(m.v))N.gin=m.v;
  }else if(N.role==='g'){
-  if(m.t==='hello'&&!B){const hl=unpackLook(m.ch);if(!hl)return;clearTimeout(N.joinT);startBattle('guest',[hl,myLook()])}
+  if(m.t==='hello'&&!B){const hl=unpackLook(m.ch);if(!hl)return;N.oppLook=hl;if(N.oppPhoto)hl.photo=getImg(N.oppPhoto);clearTimeout(N.joinT);startBattle('guest',[hl,myLook()])}
+  else if(m.t==='ph')onPhotoPart(m);
   else if(m.t==='gs'&&m.s&&typeof m.s==='object')N.gs=m.s;
   else if(m.t==='full'){setOStat('そのへやは満員でした');netLeave()}
  }
