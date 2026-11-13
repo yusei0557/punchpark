@@ -83,11 +83,29 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
  #scr-battle{flex-direction:row;justify-content:center;align-items:center}
  #bwrap{height:100%;width:auto;max-width:100%}
  #pad{position:absolute;left:0;right:0;bottom:0;background:none;pointer-events:none;min-height:0;padding:8px 16px}
- #pad .pb{pointer-events:auto;opacity:.6;width:58px;height:58px;font-size:14px}
+ #pad .pb,#pad .stick{pointer-events:auto;opacity:.6;width:58px;height:58px;font-size:14px}
+ #pad .stick{width:110px;height:110px}
+ #pad.custom{top:0;bottom:0}
  .acts{grid-template-columns:repeat(3,58px)}
  #bover{position:fixed}
  #keys{display:none!important}
 }
+/* 操作カスタム */
+.stick{width:124px;height:124px;border-radius:50%;background:radial-gradient(circle,#ffffff18,#ffffff30);border:3px solid #ffffff55;position:relative;touch-action:none;display:none}
+.stick .knob{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:#d8d4e8;border:4px solid var(--ink);box-shadow:0 4px 0 var(--ink);pointer-events:none}
+.stick .ar{position:absolute;top:50%;transform:translateY(-50%);color:#fff8;font-size:14px;pointer-events:none}
+#pad.stickmode .stick{display:block}
+#pad.stickmode .pb.mv{display:none!important}
+#pad{--bs:1}
+#pad.custom{position:relative}
+#pad.custom .dpad,#pad.custom .acts{display:contents}
+#pad.custom .pb,#pad.custom .stick{position:absolute;transform:translate(-50%,-50%) scale(var(--bs));margin:0}
+#pad.custom .pb.down{transform:translate(-50%,-46%) scale(var(--bs))}
+#pad.editing .pb,#pad.editing .stick{outline:3px dashed #ffd83a;outline-offset:3px;opacity:1!important}
+#edbar{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:20;display:none;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;background:#1a1020ee;border:2px solid var(--hi);border-radius:10px;padding:8px;width:min(96vw,520px)}
+#edbar .btn{font-size:13px;padding:7px 9px}
+#edbar .msg{width:100%;text-align:center;font-size:12px;opacity:.85}
+.bgmbtn{background:var(--ink);color:var(--hi);border:2px solid var(--hi);border-radius:16px;padding:4px 10px;font-size:12px}
 /* gacha */
 .gm{width:200px;height:250px;margin:0 auto;display:block}
 #reveal{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:80;padding:20px}
@@ -104,7 +122,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v11</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><button class="bgmbtn" id="bgmbtn">♪ BGM ON</button><span class="muted" id="hsave">セーブ: このスマホ ・ v12</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -193,7 +211,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
  </div>
  <div id="keys">← → 移動 / ↑ ジャンプ / J 弱 / K 強(長押しでタメ) / O つかみ / L ガード(長押し) / I 必殺</div>
  <div id="pad">
-  <div class="dpad"><div class="pb mv" data-k="l">◀</div><div class="pb mv" data-k="r">▶</div></div>
+  <div class="dpad"><div class="pb mv" data-k="l">◀</div><div class="pb mv" data-k="r">▶</div><div class="stick" data-k="stick"><span class="ar" style="left:8px">◀</span><span class="ar" style="right:8px">▶</span><div class="knob"></div></div></div>
   <div class="acts">
    <div class="pb a" data-k="a">弱</div><div class="pb b" data-k="b">強<br><small style="font-size:9px">長押しタメ</small></div><div class="pb c" data-k="c">つかみ</div>
    <div class="pb g" data-k="g">ガード</div><div class="pb s" data-k="s" id="spbtn">必殺</div><div class="pb u" data-k="u">ジャンプ</div>
@@ -201,6 +219,11 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
  </div>
 </section>
 
+<div id="edbar"><div class="msg">ボタンをドラッグして好きな場所へ（縦画面と横画面は別々に保存）</div>
+ <button class="btn sm wht" id="edmove">移動：ボタン</button>
+ <button class="btn sm wht" id="edsm">小さく</button><button class="btn sm wht" id="edbg">大きく</button>
+ <button class="btn sm gry" id="edreset">リセット</button><button class="btn sm grn" id="eddone">完了</button>
+</div>
 <div id="reveal"><div class="card" style="position:relative;overflow:hidden;isolation:isolate"><div class="rays"></div><div id="rvbody"></div></div></div>
 <div id="modal"><div class="card" id="mbody"></div></div>
 <div class="toast" id="toast"></div>
@@ -623,7 +646,7 @@ async function initStore(){
 
 /* ================= 画面切替 ================= */
 let cur='home';
-function show(id){document.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.id==='scr-'+id));cur=id;
+function show(id){document.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.id==='scr-'+id));cur=id;if(id!=='battle')playBGM('title');
  if(id==='home')refreshHome();if(id==='gacha')refreshGacha();if(id==='closet')refreshCloset();
  document.querySelector('#scr-'+id).scrollTop=0}
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
@@ -668,7 +691,8 @@ function refreshHome(){
   mk('オンライン対戦','blu',openOnline);
   const r=document.createElement('div');r.className='row';bt.appendChild(r);
   const g1=mk('ガチャ','red',()=>show('gacha'));const g2=mk('きせかえ','wht',()=>show('closet'));r.append(g1,g2);
-  const ed=mk('キャラを編集','wht',()=>openCreate(true));ed.style.marginTop='10px';
+  const lay=mk('ボタン配置・スティック設定','wht',openLayoutEditor);lay.style.marginTop='10px';
+  const ed=mk('キャラを編集','wht',()=>openCreate(true));
   const del=mk('キャラを消す','gry sm',async()=>{const i=await modal(`「${c.name}」を消しますか？\nコインと服はのこります。`,[{t:'やめる',c:'wht'},{t:'消す',c:'red'}]);if(i===1){S.data.char=null;lsSet('pp_dev_char',null);await save();refreshHome()}});
 
  }
@@ -926,7 +950,55 @@ function sfx(k){if(!AC)return;try{switch(k){
  case 'gacha':for(let i=0;i<6;i++)tone(400+i*80,420+i*80,.05,'square',.05,i*.12);break;
  case 'win':[523,659,784,1047].forEach((f,i)=>tone(f,f,.16,'square',.08,i*.12));break;
 }}catch(e){}}
-document.addEventListener('pointerdown',()=>ac(),{once:false,passive:true});
+document.addEventListener('pointerdown',()=>{ac();if(BGM.want&&!BGM.cur)playBGM(BGM.want)},{once:false,passive:true});
+for(const ev of['touchend','click'])document.addEventListener(ev,()=>{ac();if(BGM.want&&!BGM.cur)playBGM(BGM.want)},{passive:true});
+/* ===== BGM（自作のチップチューン） ===== */
+const BGM={on:lsGet('pp_bgm')!=='off',cur:null,want:'title',timer:null,step:0,next:0,gain:null};
+const n2f=m=>440*Math.pow(2,(m-69)/12);
+const SONGS={
+ title:{bpm:104,vol:.16,
+  chords:[48,45,41,43,48,45,41,43],
+  lead:[[72,0,76,0,79,0,76,0,77,0,76,0,74,0,72,0],[72,0,69,0,72,0,76,0,74,0,0,0,72,0,0,0],[69,0,72,0,77,0,76,0,74,0,72,0,74,0,76,0],[79,0,0,0,77,0,76,0,74,0,0,0,71,0,74,0],
+        [76,0,79,0,84,0,83,0,81,0,79,0,77,0,76,0],[76,0,72,0,76,0,79,0,81,0,0,0,79,0,0,0],[77,0,76,0,74,0,72,0,74,0,76,0,77,0,79,0],[79,0,77,0,76,0,74,0,72,0,0,0,0,0,0,0]],
+  bass:[0,0,12,0,7,0,12,0,0,0,12,0,7,0,12,0],drum:'soft'},
+ battle:{bpm:152,vol:.14,
+  chords:[45,45,41,43,45,45,41,40],
+  lead:[[81,0,79,81,0,76,0,74,76,0,72,0,74,0,76,0],[81,0,79,81,0,84,0,83,81,0,79,0,76,0,0,0],[77,0,76,77,0,81,0,79,77,0,76,0,72,0,74,0],[79,0,0,0,74,0,79,0,83,0,0,0,81,0,79,0],
+        [81,0,84,0,88,0,86,84,83,0,81,0,79,0,76,0],[81,0,79,81,0,84,0,86,88,0,86,0,84,0,83,0],[84,0,83,84,0,81,0,79,77,0,79,0,81,0,84,0],[83,0,0,0,80,0,0,0,76,0,80,0,83,0,0,0]],
+  bass:[0,0,12,0,0,0,12,0,0,0,12,0,0,0,12,0],drum:'hard'}
+};
+function bgmNote(t,m,dur,type,vol){const a=AC,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(n2f(m),t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g).connect(BGM.gain);o.start(t);o.stop(t+dur+.02)}
+function bgmDrum(t,k){const a=AC;
+ if(k==='kick'){const o=a.createOscillator(),g=a.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);g.gain.setValueAtTime(.9,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(g).connect(BGM.gain);o.start(t);o.stop(t+.16);return}
+ if(!NOISE)return;const s=a.createBufferSource();s.buffer=NOISE;const f=a.createBiquadFilter();const g=a.createGain();
+ if(k==='snare'){f.type='bandpass';f.frequency.value=1800;g.gain.setValueAtTime(.45,t);g.gain.exponentialRampToValueAtTime(.001,t+.12)}
+ else{f.type='highpass';f.frequency.value=7000;g.gain.setValueAtTime(k==='hat2'?.12:.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.04)}
+ s.connect(f).connect(g).connect(BGM.gain);s.start(t);s.stop(t+.15)}
+function bgmSched(){
+ const sg=SONGS[BGM.cur];if(!sg||!AC)return;const sp=60/sg.bpm/4;
+ while(BGM.next<AC.currentTime+.12){
+  const t=BGM.next,st=BGM.step,bar=Math.floor(st/16)%sg.lead.length,i=st%16,root=sg.chords[bar];
+  const ln=sg.lead[bar][i];if(ln){let d=1;while(i+d<16&&!sg.lead[bar][i+d]&&d<4)d++;bgmNote(t,ln,sp*d*.95,'square',.22)}
+  if(i%2===0||sg.drum==='hard'&&i%2===0){const b=sg.bass[i];if(sg.drum==='hard'||i%2===0)bgmNote(t,root-12+(b||0),sp*1.6,'triangle',.5)}
+  if(sg.drum==='soft'){if(i%4===2)bgmDrum(t,'hat2');if(i%8===0)bgmNote(t,root+12,sp*6,'triangle',.12)}
+  else{if(i%2===0)bgmDrum(t,'hat');if(i===0||i===8||i===10&&bar%2)bgmDrum(t,'kick');if(i===4||i===12)bgmDrum(t,'snare');if(i%4===0)bgmNote(t,root+12,sp*1.5,'sawtooth',.06)}
+  BGM.next+=sp;BGM.step++;
+ }
+}
+function playBGM(name){
+ BGM.want=name;
+ if(!BGM.on||!name){stopBGM();return}
+ if(BGM.cur===name)return;
+ if(!AC)return; // 最初のタップを待つ
+ stopBGM();
+ BGM.gain=AC.createGain();BGM.gain.gain.value=SONGS[name].vol;BGM.gain.connect(AC.destination);
+ BGM.cur=name;BGM.step=0;BGM.next=AC.currentTime+.08;BGM.timer=setInterval(bgmSched,30);bgmSched();
+}
+function stopBGM(){if(BGM.timer)clearInterval(BGM.timer);BGM.timer=null;if(BGM.gain){const g=BGM.gain;try{g.gain.setTargetAtTime(0,AC.currentTime,.05)}catch(e){}setTimeout(()=>{try{g.disconnect()}catch(e){}},400)}BGM.gain=null;BGM.cur=null}
+function refreshBgmBtn(){$('#bgmbtn').textContent=BGM.on?'♪ BGM ON':'♪ BGM OFF';$('#bgmbtn').style.opacity=BGM.on?1:.6}
+$('#bgmbtn').onclick=()=>{ac();BGM.on=!BGM.on;lsSet('pp_bgm',BGM.on?'on':'off');refreshBgmBtn();if(BGM.on){const w=BGM.want||'title';BGM.cur=null;playBGM(w)}else stopBGM()};
+refreshBgmBtn();
+document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend().catch(()=>{});else AC.resume().catch(()=>{})});
 
 /* ================= 格闘ロジック ================= */
 function mkF(lk,x){const t=TYPES[lk.type]||TYPES.attack;return {x,dx:x,face:x<160?1:-1,hp:t.hp,maxHp:t.hp,hpT:t.hp,st:t.st,maxSt:t.st,reg:t.reg,atk:t.atk,gd:100,sp:0,state:'idle',t:0,mv:null,hitDone:false,landed:false,stun:0,vx:0,rd:0,buf:null,la:undefined,lb:0,ls:0,broken:false,combo:0,noSt:0,bt:0,chg:0,cl:0,y:0,vy:0,jx:0,land:0,airAtk:0}}
@@ -1106,9 +1178,10 @@ function startBattle(mode,looks,opt={}){
  B.rates=mode==='cpu'?[S.data.rate|0,null]:mode==='host'?[S.data.rate|0,looks[1].rate|0]:[looks[0].rate|0,S.data.rate|0];
  B.cpuLabel=mode==='cpu'?'CPU・'+CPU_LV[opt.lv].name:'';
  B.vs=opt.noVs?0:VS_LEN;B.vsT=0;
- $('#bover').style.display='none';show('battle');resizeBattle();
+ $('#bover').style.display='none';show('battle');resizeBattle();applyControls();
+ if(!opt.noBgm)playBGM('battle');
 }
-function quitBattle(){$('#pad').style.visibility='';if(B&&B.mode!=='cpu')netLeave();B=null;show('home')}
+function quitBattle(){if(EDIT){EDIT=false;$('#pad').classList.remove('editing');$('#edbar').style.display='none'}$('#pad').style.visibility='';if(B&&B.mode!=='cpu')netLeave();B=null;show('home')}
 function processEvents(G){
  for(const e of G.evs){if(e.id<=B.lastEv)continue;B.lastEv=e.id;
   const n={L:8,H:14,S:26,b:6,gb:18,ko:30}[e.k]||0;
@@ -1123,6 +1196,7 @@ function processEvents(G){
 }
 function tick(){
  if(!B)return;const G=B.G;B.fr=(B.fr||0)+1;
+ if(B.edit)return;
  if(B.vs>0){B.vs--;B.vsT++;if(B.vsT===1)sfx('vsin');if(B.vsT===VS_HIT)sfx('vs');
   if(B.mode==='host'&&++B.sendT>=2){B.sendT=0;netSendState(G)}
   if(B.mode==='guest'&&netOpen()){const gs=N.gs;if(gs&&gs!==B.snapRef){B.snapRef=gs;applySnap(G,gs)}}
@@ -1305,17 +1379,75 @@ function press(k,on){
  if(k==='b')LI.bh=on?1:0;
  netSendInput();
 }
+/* ===== 操作設定（配置・スティック） ===== */
+let CTRL={move:'btn',size:1,pos:{p:null,l:null}};
+try{const c=JSON.parse(lsGet('pp_ctrl')||'null');if(c&&typeof c==='object'){CTRL.move=c.move==='stick'?'stick':'btn';CTRL.size=clamp(+c.size||1,.7,1.5);CTRL.pos={p:c.pos&&c.pos.p||null,l:c.pos&&c.pos.l||null}}}catch(e){}
+function saveCtrl(){lsSet('pp_ctrl',JSON.stringify(CTRL))}
+let EDIT=false;
+const orient=()=>innerHeight>innerWidth?'p':'l';
+const padEls=()=>[...document.querySelectorAll('#pad .pb, #pad .stick')];
+function applyControls(){
+ const pad=$('#pad'),o=orient(),pos=CTRL.pos[o];
+ pad.classList.toggle('stickmode',CTRL.move==='stick');
+ pad.classList.toggle('custom',!!pos);pad.style.setProperty('--bs',pos?CTRL.size:1);
+ for(const el of padEls()){const p=pos&&pos[el.dataset.k];if(p){el.style.left=(p[0]*100)+'%';el.style.top=(p[1]*100)+'%'}else{el.style.left='';el.style.top=''}}
+ $('#edmove').textContent='移動：'+(CTRL.move==='stick'?'スティック':'ボタン');
+}
+function snapshotPos(){
+ const pad=$('#pad'),r=pad.getBoundingClientRect(),pos={};
+ for(const el of padEls()){const st=getComputedStyle(el);if(st.display==='none')continue;const b=el.getBoundingClientRect();pos[el.dataset.k]=[(b.left+b.width/2-r.left)/r.width,(b.top+b.height/2-r.top)/r.height]}
+ // 隠れているもの（ボタン⇄スティック）は近くに置く
+ if(!pos.stick&&pos.l)pos.stick=[(pos.l[0]+(pos.r||pos.l)[0])/2,pos.l[1]];
+ if(!pos.l&&pos.stick){pos.l=[pos.stick[0]-.1,pos.stick[1]];pos.r=[pos.stick[0]+.1,pos.stick[1]]}
+ return pos;
+}
+function startDrag(el,x0,y0,id){
+ const o=orient();if(!CTRL.pos[o]){CTRL.pos[o]=snapshotPos();applyControls()}
+ const pad=$('#pad'),r=pad.getBoundingClientRect(),k=el.dataset.k;const st=CTRL.pos[o][k]||[.5,.5];
+ const sx=st[0],sy=st[1];
+ const hw=Math.min(.45,el.offsetWidth*CTRL.size/2/r.width),hh=Math.min(.45,el.offsetHeight*CTRL.size/2/r.height);
+ const mv=(x,y)=>{const nx=clamp(sx+(x-x0)/r.width,hw,1-hw),ny=clamp(sy+(y-y0)/r.height,hh,1-hh);CTRL.pos[o][k]=[nx,ny];el.style.left=(nx*100)+'%';el.style.top=(ny*100)+'%'};
+ const tm=e=>{for(const t of e.changedTouches)if(t.identifier===id){e.preventDefault();mv(t.clientX,t.clientY)}};
+ const te=e=>{for(const t of e.changedTouches)if(t.identifier===id){removeEventListener('touchmove',tm);removeEventListener('touchend',te);removeEventListener('touchcancel',te)}};
+ const mm=e=>mv(e.clientX,e.clientY),mu=()=>{removeEventListener('mousemove',mm);removeEventListener('mouseup',mu)};
+ if(id==='mouse'){addEventListener('mousemove',mm);addEventListener('mouseup',mu)}else{addEventListener('touchmove',tm,{passive:false});addEventListener('touchend',te);addEventListener('touchcancel',te)}
+}
 document.querySelectorAll('.pb').forEach(el=>{
  const k=el.dataset.k,ids=new Set();
  const down=()=>{if(el.classList.contains('down'))return;el.classList.add('down');press(k,1)};
  const up=()=>{if(!el.classList.contains('down'))return;el.classList.remove('down');press(k,0)};
  // iPhoneはtouchイベントを直接止めないとダブルタップでズームする
- el.addEventListener('touchstart',e=>{e.preventDefault();ac();for(const t of e.changedTouches)ids.add(t.identifier);down()},{passive:false});
+ el.addEventListener('touchstart',e=>{e.preventDefault();ac();if(EDIT){const t=e.changedTouches[0];startDrag(el,t.clientX,t.clientY,t.identifier);return}for(const t of e.changedTouches)ids.add(t.identifier);down()},{passive:false});
  const tend=e=>{e.preventDefault();for(const t of e.changedTouches)ids.delete(t.identifier);if(!ids.size)up()};
  el.addEventListener('touchend',tend,{passive:false});el.addEventListener('touchcancel',tend,{passive:false});
- el.addEventListener('mousedown',e=>{e.preventDefault();down();const mu=()=>{up();removeEventListener('mouseup',mu)};addEventListener('mouseup',mu)});
+ el.addEventListener('mousedown',e=>{e.preventDefault();if(EDIT){startDrag(el,e.clientX,e.clientY,'mouse');return}down();const mu=()=>{up();removeEventListener('mouseup',mu)};addEventListener('mouseup',mu)});
  el.addEventListener('contextmenu',e=>e.preventDefault());
 });
+// スティック（左右で前進・後退）
+(()=>{const st=$('.stick'),knob=st.querySelector('.knob');let tid=null,cx0=0,cy0=0;
+ const setDir=dx=>{const l=dx<-14?1:0,r=dx>14?1:0;if(l!==LI.l||r!==LI.r){LI.l=l;LI.r=r;netSendInput()}};
+ const moveK=(x,y)=>{const dx=clamp(x-cx0,-42,42),dy=clamp(y-cy0,-16,16);knob.style.transform=`translate(${dx}px,${dy}px)`;setDir(x-cx0)};
+ const reset=()=>{tid=null;knob.style.transform='';setDir(0)};
+ const begin=(x,y)=>{const b=st.getBoundingClientRect();cx0=b.left+b.width/2;cy0=b.top+b.height/2;moveK(x,y)};
+ st.addEventListener('touchstart',e=>{e.preventDefault();ac();const t=e.changedTouches[0];if(EDIT){startDrag(st,t.clientX,t.clientY,t.identifier);return}if(tid!==null)return;tid=t.identifier;begin(t.clientX,t.clientY)},{passive:false});
+ st.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===tid)moveK(t.clientX,t.clientY)},{passive:false});
+ const te=e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===tid)reset()};
+ st.addEventListener('touchend',te,{passive:false});st.addEventListener('touchcancel',te,{passive:false});
+ st.addEventListener('mousedown',e=>{e.preventDefault();if(EDIT){startDrag(st,e.clientX,e.clientY,'mouse');return}begin(e.clientX,e.clientY);const mm=ev=>moveK(ev.clientX,ev.clientY),mu=()=>{reset();removeEventListener('mousemove',mm);removeEventListener('mouseup',mu)};addEventListener('mousemove',mm);addEventListener('mouseup',mu)});
+})();
+// 配置エディタ
+function openLayoutEditor(){
+ const me=myLook()||MANNE_LOOK();startBattle('cpu',[me,MANNE_LOOK()],{lv:'easy',noVs:true});
+ B.edit=true;B.G.phase='fight';EDIT=true;$('#pad').classList.add('editing');$('#edbar').style.display='flex';applyControls();playBGM(null);
+}
+function closeLayoutEditor(){EDIT=false;$('#pad').classList.remove('editing');$('#edbar').style.display='none';saveCtrl();quitBattle()}
+$('#edmove').onclick=()=>{CTRL.move=CTRL.move==='stick'?'btn':'stick';const o=orient();if(CTRL.pos[o]){const p=CTRL.pos[o];if(!p.stick&&p.l)p.stick=[(p.l[0]+p.r[0])/2,p.l[1]];if(!p.l&&p.stick){p.l=[p.stick[0]-.1,p.stick[1]];p.r=[p.stick[0]+.1,p.stick[1]]}}applyControls()};
+$('#edsm').onclick=()=>{const o=orient();if(!CTRL.pos[o])CTRL.pos[o]=snapshotPos();CTRL.size=clamp(Math.round((CTRL.size-.1)*10)/10,.7,1.5);applyControls()};
+$('#edbg').onclick=()=>{const o=orient();if(!CTRL.pos[o])CTRL.pos[o]=snapshotPos();CTRL.size=clamp(Math.round((CTRL.size+.1)*10)/10,.7,1.5);applyControls()};
+$('#edreset').onclick=()=>{CTRL.pos[orient()]=null;CTRL.size=1;applyControls()};
+$('#eddone').onclick=closeLayoutEditor;
+addEventListener('resize',()=>{if(cur==='battle')applyControls()});
+applyControls();
 // バトル画面はどこを触ってもズームしない（結果画面のボタン以外）
 $('#bwrap').addEventListener('pointerdown',()=>{if(B&&B.mode==='cpu'&&B.vs>0&&B.vsT>VS_HIT+10)B.vs=1});
 $('#scr-battle').addEventListener('touchstart',e=>{if(!(e.target.closest&&e.target.closest('#bover')))e.preventDefault()},{passive:false});
