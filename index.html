@@ -104,7 +104,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v10</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v11</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -380,9 +380,9 @@ let _ml=null;const MANNE_LOOK=()=>{if(!_ml)_ml=makeLook({name:'マネキン',typ
 function packLook(ch){return {n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.thumb||undefined}}
 function unpackLook(p,by){
  if(!p||typeof p!=='object')return null;
- const rec=[clamp(Math.floor(+p.w||0),0,99999),clamp(Math.floor(+p.l||0),0,99999)];
+ const rec=[clamp(Math.floor(+p.w||0),0,99999),clamp(Math.floor(+p.l||0),0,99999)],rate=clamp(Math.floor(+p.rt||0),0,999999);
  const type=(p.ty in TYPES&&p.ty!=='dummy')?p.ty:'attack';
- const lk=makeLook({name:typeof p.n==='string'?p.n:'？？？',type,face:p.fc,photo:validImg(p.ph)?p.ph:null,skin:p.sk,outfit:(typeof p.of==='string'&&OUT[p.of])?p.of:'t_white'});lk.rec=rec;return lk;
+ const lk=makeLook({name:typeof p.n==='string'?p.n:'？？？',type,face:p.fc,photo:validImg(p.ph)?p.ph:null,skin:p.sk,outfit:(typeof p.of==='string'&&OUT[p.of])?p.of:'t_white'});lk.rec=rec;lk.rate=rate;return lk;
 }
 async function loadHead(by){if(!S.db)return null;try{const sn=await S.db.doc('heads/'+by).get();const d=sn.exists&&sn.data();return d&&validImg(d.p)?d.p:null}catch(e){return null}}
 
@@ -572,12 +572,17 @@ function drawScene(g,fr,ox=0,oy=0){
 
 /* ================= 保存 ================= */
 const S={data:null,ref:null,writing:false,pending:false,online:false,db:null,uid:null,headSent:undefined};
-function defSave(){return {v:1,coins:100,owned:START_OUT.slice(),char:null,wins:0,losses:0}}
+function defSave(){return {v:1,coins:100,owned:START_OUT.slice(),char:null,wins:0,losses:0,rate:0}}
+/* ===== レートと称号（オンラインのみ） ===== */
+const RATE_WIN=100,RATE_LOSE=50;
+const TITLES=[[0,'ルーキー','#9aa0b0'],[300,'こうえんデビュー','#7ad070'],[600,'すなばの番長','#e0b050'],[1000,'ベンチの主','#c08050'],[1500,'ブランコの達人','#5ab8f0'],[2000,'すべり台マスター','#4a8cf0'],[3000,'こうえんの覇者','#b04ae0'],[4000,'パンチの鬼','#f04848'],[5000,'パンチの神','#ffd83a']];
+function titleOf(r){let t=TITLES[0];for(const x of TITLES)if(r>=x[0])t=x;return {n:t[1],c:t[2],min:t[0]}}
+function nextTitle(r){return TITLES.find(x=>x[0]>r)||null}
 function normSave(d){
  const s=defSave();if(!d||typeof d!=='object')return s;
  s.coins=Math.max(0,Math.floor(+d.coins||0));
  s.owned=Array.isArray(d.owned)?[...new Set(d.owned.filter(id=>OUT[id]).concat(START_OUT))]:s.owned;
- s.wins=Math.max(0,+d.wins||0);s.losses=Math.max(0,+d.losses||0);
+ s.wins=Math.max(0,+d.wins||0);s.losses=Math.max(0,+d.losses||0);s.rate=Math.max(0,Math.floor(+d.rate||0));
  if(d.char&&typeof d.char==='object'){const c=d.char,f=sanitizeFace(c.face),ph=validImg(c.photo)?c.photo:null;if(f||ph)s.char={name:String(c.name||'').slice(0,8)||'なまえ',type:TYPES[c.type]&&c.type!=='dummy'?c.type:'attack',face:f,photo:ph,thumb:ph&&validImg(c.thumb)&&c.thumb.length<=2400?c.thumb:null,skin:hexOk(c.skin)?c.skin:null,outfit:OUT[c.outfit]?c.outfit:'t_white'}}
  return s;
 }
@@ -652,7 +657,13 @@ function refreshHome(){
  }else{
   const ty=TYPES[c.type];const n=document.createElement('div');n.style.fontSize='20px';n.textContent=c.name;
   const d=document.createElement('div');d.className='muted';d.textContent=`${ty.name} ／ ${S.data.wins}勝 ${S.data.losses}敗`;
-  info.append(n,d);
+  const tt=titleOf(S.data.rate),nx=nextTitle(S.data.rate);
+  const tr=document.createElement('div');tr.style.cssText='margin-top:6px;display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap';
+  const badge=document.createElement('span');badge.textContent=tt.n;badge.style.cssText=`background:${tt.c};color:#1a1020;border:2px solid #1a1020;border-radius:12px;padding:2px 10px;font-size:14px`;
+  const rt=document.createElement('span');rt.style.cssText='font-family:"Press Start 2P";font-size:11px;color:#ffd83a';rt.textContent='RATE '+S.data.rate;
+  tr.append(badge,rt);
+  const nt=document.createElement('div');nt.className='muted';nt.style.fontSize='12px';nt.textContent=nx?`つぎの称号「${nx[1]}」まで あと${nx[0]-S.data.rate}`:'最高の称号！';
+  info.append(n,d,tr,nt);
   mk('CPUとたたかう','grn',()=>show('cpu'));
   mk('オンライン対戦','blu',openOnline);
   const r=document.createElement('div');r.className='row';bt.appendChild(r);
@@ -1092,6 +1103,7 @@ function startBattle(mode,looks,opt={}){
  for(const k in LI)LI[k]=0;
  const mine=[S.data.wins|0,S.data.losses|0];
  B.recs=mode==='cpu'?[mine,null]:mode==='host'?[mine,looks[1].rec||[0,0]]:[looks[0].rec||[0,0],mine];
+ B.rates=mode==='cpu'?[S.data.rate|0,null]:mode==='host'?[S.data.rate|0,looks[1].rate|0]:[looks[0].rate|0,S.data.rate|0];
  B.cpuLabel=mode==='cpu'?'CPU・'+CPU_LV[opt.lv].name:'';
  B.vs=opt.noVs?0:VS_LEN;B.vsT=0;
  $('#bover').style.display='none';show('battle');resizeBattle();
@@ -1137,12 +1149,19 @@ function tick(){
 function onMatchEnd(G){
  const me=B.me,won=G.result===me,lost=G.result===1-me;
  if(won){S.data.coins+=100;S.data.wins++}else if(lost)S.data.losses++;
+ let rateMsg=null;
+ if(B.mode!=='cpu'&&(won||lost)){const before=S.data.rate|0,t0=titleOf(before);S.data.rate=Math.max(0,before+(won?RATE_WIN:-RATE_LOSE));const t1=titleOf(S.data.rate);
+  rateMsg={d:S.data.rate-before,r:S.data.rate,up:t1.min>t0.min?t1:null,down:t1.min<t0.min?t1:null}}
  save();if(won)sfx('win');
  const c=$('#bovc');c.innerHTML='';
  const h=document.createElement('div');h.style.cssText='font-family:"Press Start 2P";font-size:22px;color:'+(won?'#ffd83a':lost?'#8ab0ff':'#fff');h.textContent=won?'YOU WIN!':lost?'YOU LOSE':'DRAW';
  const m=document.createElement('div');m.textContent=won?'+100コイン ゲット！':lost?'つぎはがんばろう':'引き分け';
  const cn=document.createElement('div');cn.className='muted';cn.textContent=`所持コイン ${S.data.coins}`;
- c.append(h,m,cn);
+ c.append(h,m);
+ if(rateMsg){const rr=document.createElement('div');rr.style.cssText='font-family:"Press Start 2P";font-size:12px;color:'+(rateMsg.d>=0?'#7aff9a':'#ff8a8a');rr.textContent=`RATE ${rateMsg.d>=0?'+':''}${rateMsg.d} → ${rateMsg.r}`;c.append(rr);
+  if(rateMsg.up){const u=document.createElement('div');u.style.cssText=`font-size:18px;color:${rateMsg.up.c}`;u.textContent=`称号アップ！「${rateMsg.up.n}」`;c.append(u);setTimeout(()=>sfx('win'),400)}
+  if(rateMsg.down){const u=document.createElement('div');u.className='muted';u.textContent=`称号が「${rateMsg.down.n}」になった…`;c.append(u)}}
+ c.append(cn);
  const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=t;b.onclick=fn;c.appendChild(b)};
  if(B.mode==='cpu'){mk('もう一回','grn',()=>{const lv=B.ai.lvKey;startBattle('cpu',B.looks,{lv,noVs:true})});mk('ホームへ','wht',quitBattle)}
  else if(B.mode==='host'){mk('再戦する','grn',()=>{if(!netOpen()){toast('相手がいません');return}B.G=newGame(B.looks);B.lastEv=0;B.fx=[];$('#bover').style.display='none'});mk('ぬける','wht',quitBattle)}
@@ -1212,11 +1231,16 @@ function drawVS(){
  const L1=B.looks[0],L2=B.looks[1],r0=B.recs[0],r1v=B.recs[1];
  T(L1.name,V*.2-off,by+15,12*MS,'#ffffff','center',1);
  T(L2.name,V*.8+off,by+15,12*MS,'#ffffff','center',1);
- const rec=r=>r?`${r[0]}勝 ${r[1]}敗`:'';
- T(rec(r0),V*.2-off,by+33,6.5*MS,'#ffd83a','center',1);
- T(r1v?rec(r1v):B.cpuLabel,V*.8+off,by+33,6.5*MS,'#ffd83a','center',1);
- T(TYPES[L1.type]?TYPES[L1.type].name:'',V*.2-off,by-6,5.5*MS,'#ffb0c0','center',1);
- T(TYPES[L2.type]?TYPES[L2.type].name:'',V*.8+off,by-6,5.5*MS,'#b0c8ff','center',1);
+ const rec=(r,rt)=>r?`${r[0]}勝 ${r[1]}敗　レート ${rt|0}`:'';
+ T(rec(r0,B.rates[0]),V*.2-off,by+33,6*MS,'#ffd83a','center',1);
+ T(r1v?rec(r1v,B.rates[1]):B.cpuLabel,V*.8+off,by+33,6*MS,'#ffd83a','center',1);
+ T(TYPES[L1.type]?TYPES[L1.type].name:'',V*.2-off,by-22,5.5*MS,'#ffb0c0','center',1);
+ T(TYPES[L2.type]?TYPES[L2.type].name:'',V*.8+off,by-22,5.5*MS,'#b0c8ff','center',1);
+ const pill=(rate,x)=>{if(rate==null)return;const tt=titleOf(rate);const fs=6.5*MS;cx.font=`${Math.round(fs*DS)}px "DotGothic16"`;const w=cx.measureText(tt.n).width/DS+10;
+  cx.fillStyle='#1a1020';cx.beginPath();cx.roundRect((x-w/2-1)*DS,(by-14)*DS,(w+2)*DS,(fs+5)*DS,6*DS);cx.fill();
+  cx.fillStyle=tt.c;cx.beginPath();cx.roundRect((x-w/2)*DS,(by-13)*DS,w*DS,(fs+3)*DS,5*DS);cx.fill();
+  cx.fillStyle='#1a1020';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(tt.n,x*DS,(by-13+(fs+3)/2+.5)*DS)};
+ pill(B.rates[0],V*.2-off);pill(B.rates[1],V*.8+off);
  T('PARK STAGE',V/2,H-6,4*MS,'#d8c8ff');
  T('PUNCH PARK',V/2,9,5*MS,'#ffd83a');
  if(B.mode==='cpu'&&t>VS_HIT+10&&(fr>>4)%2)T('タップでスキップ',V/2,H*.66,5*MS,'#ffffffaa','center',1);
@@ -1357,7 +1381,7 @@ async function joinRoom(code){
   setOStat(e.type==='peer-unavailable'?'へや #'+code+' が見つからなかった。コードを確認してね':'通信エラー（'+e.type+'）。もう一回ためしてね');clearTimeout(N.joinT)});
  clearTimeout(N.joinT);N.joinT=setTimeout(()=>{if(N.role==='g'&&!B){setOStat('つながらなかった…相手と同じWi-Fiにするか、もう一回ためしてね');netLeave()}},15000);
 }
-function packFull(ch){return {w:S.data.wins|0,l:S.data.losses|0,n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.photo||undefined}}
+function packFull(ch){return {rt:S.data.rate|0,w:S.data.wins|0,l:S.data.losses|0,n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.photo||undefined}}
 // 写真は大きいので12KBずつ分けて送る（iPhoneは大きいメッセージを送れない）
 function sendLook(conn){const ch=packFull(S.data.char);const ph=ch.ph;delete ch.ph;const CH=12000,n=ph?Math.ceil(ph.length/CH):0;
  try{conn.send({t:'hello',ch,pn:n});for(let i=0;i<n;i++)conn.send({t:'ph',i,n,d:ph.slice(i*CH,(i+1)*CH)})}catch(e){}}
