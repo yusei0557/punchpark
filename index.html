@@ -122,7 +122,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><button class="bgmbtn" id="bgmbtn">♪ BGM ON</button><span class="muted" id="hsave">セーブ: このスマホ ・ v12</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><button class="bgmbtn" id="bgmbtn">♪ BGM ON</button><span class="muted" id="hsave">セーブ: このスマホ ・ v13</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -1044,7 +1044,7 @@ function stepFighter(G,i,inp,act){
  f.t++;if(f.noSt>0)f.noSt--;
  if(f.vx){f.x+=f.vx;f.vx*=.8;if(Math.abs(f.vx)<.05)f.vx=0}
  // ジャンプ・空中
- if(f.y>0||f.vy>0){const airMove=f.state==='jump'||(f.state==='atk'&&f.mv==='J');f.y+=f.vy;f.vy-=GRAV;if(airMove)f.x+=f.jx;
+ if(f.y>0||f.vy>0){const airMove=f.state==='jump'||(f.state==='atk'&&f.mv==='J');f.y+=f.vy;f.vy-=GRAV;if(airMove){const ad=act?(inp.r?1:0)-(inp.l?1:0):0;if(ad)f.jx+=(ad*JUMP_X-f.jx)*.15;f.x+=f.jx}
   if(f.y<=0){f.y=0;f.vy=0;f.jx=0;if(airMove){f.state='idle';f.t=0;f.land=f.mv==='J'?6:3}}}
  if(f.hpT>f.hp)f.hpT=Math.max(f.hp,f.hpT-.35);
  const guarding=f.state==='guard'||f.state==='bstun';
