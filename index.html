@@ -104,7 +104,7 @@ input[type=text]{width:100%;font-family:inherit;font-size:18px;padding:10px;bord
 
 <!-- HOME -->
 <section id="scr-home" class="scr on"><div class="wrap">
- <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v9</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
+ <div class="top"><span class="muted" id="hsave">セーブ: このスマホ ・ v10</span><span class="coin"><i></i><span id="hcoin">0</span></span></div>
  <div class="logo">PUNCH<br>PARK</div>
  <div class="sub">パンチだけでなぐりあう公園バトル</div>
  <canvas id="hcv" class="stage" width="480" height="320"></canvas>
@@ -380,8 +380,9 @@ let _ml=null;const MANNE_LOOK=()=>{if(!_ml)_ml=makeLook({name:'マネキン',typ
 function packLook(ch){return {n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.thumb||undefined}}
 function unpackLook(p,by){
  if(!p||typeof p!=='object')return null;
+ const rec=[clamp(Math.floor(+p.w||0),0,99999),clamp(Math.floor(+p.l||0),0,99999)];
  const type=(p.ty in TYPES&&p.ty!=='dummy')?p.ty:'attack';
- return makeLook({name:typeof p.n==='string'?p.n:'？？？',type,face:p.fc,photo:validImg(p.ph)?p.ph:null,skin:p.sk,outfit:(typeof p.of==='string'&&OUT[p.of])?p.of:'t_white'});
+ const lk=makeLook({name:typeof p.n==='string'?p.n:'？？？',type,face:p.fc,photo:validImg(p.ph)?p.ph:null,skin:p.sk,outfit:(typeof p.of==='string'&&OUT[p.of])?p.of:'t_white'});lk.rec=rec;return lk;
 }
 async function loadHead(by){if(!S.db)return null;try{const sn=await S.db.doc('heads/'+by).get();const d=sn.exists&&sn.data();return d&&validImg(d.p)?d.p:null}catch(e){return null}}
 
@@ -903,6 +904,8 @@ function sfx(k){if(!AC)return;try{switch(k){
  case 'gb':tone(1200,200,.25,'square',.1);noise(.25,.3,3000);break;
  case 'ko':tone(400,40,.8,'sawtooth',.15);noise(.5,.3,600);break;
  case 'sflash':tone(200,1600,.4,'triangle',.12);break;
+ case 'vsin':noise(.35,.15,2500);tone(120,400,.35,'sawtooth',.05);break;
+ case 'vs':noise(.5,.4,500);tone(70,35,.6,'square',.14);tone(880,440,.4,'square',.05);break;
  case 'jmp':tone(300,600,.12,'square',.04);break;
  case 'gr':noise(.12,.25,600);tone(160,120,.1,'square',.08);break;
  case 'cst':tone(180,360,.25,'triangle',.06);break;
@@ -1087,9 +1090,13 @@ addEventListener('resize',()=>{if(cur==='battle')resizeBattle()});
 function startBattle(mode,looks,opt={}){
  B={mode,looks,G:newGame(looks),me:mode==='guest'?1:0,ai:mode==='cpu'?{lvl:CPU_LV[opt.lv],lvKey:opt.lv,cd:20,ct:0,inp:{l:0,r:0,g:0,a:0,b:0,s:0,bh:0,c:0,u:0}}:null,fx:[],lastEv:0,shake:0,white:0,doneMid:-1,lost:0,snapRef:null,sendT:0};
  for(const k in LI)LI[k]=0;
+ const mine=[S.data.wins|0,S.data.losses|0];
+ B.recs=mode==='cpu'?[mine,null]:mode==='host'?[mine,looks[1].rec||[0,0]]:[looks[0].rec||[0,0],mine];
+ B.cpuLabel=mode==='cpu'?'CPU・'+CPU_LV[opt.lv].name:'';
+ B.vs=opt.noVs?0:VS_LEN;B.vsT=0;
  $('#bover').style.display='none';show('battle');resizeBattle();
 }
-function quitBattle(){if(B&&B.mode!=='cpu')netLeave();B=null;show('home')}
+function quitBattle(){$('#pad').style.visibility='';if(B&&B.mode!=='cpu')netLeave();B=null;show('home')}
 function processEvents(G){
  for(const e of G.evs){if(e.id<=B.lastEv)continue;B.lastEv=e.id;
   const n={L:8,H:14,S:26,b:6,gb:18,ko:30}[e.k]||0;
@@ -1104,6 +1111,10 @@ function processEvents(G){
 }
 function tick(){
  if(!B)return;const G=B.G;B.fr=(B.fr||0)+1;
+ if(B.vs>0){B.vs--;B.vsT++;if(B.vsT===1)sfx('vsin');if(B.vsT===VS_HIT)sfx('vs');
+  if(B.mode==='host'&&++B.sendT>=2){B.sendT=0;netSendState(G)}
+  if(B.mode==='guest'&&netOpen()){const gs=N.gs;if(gs&&gs!==B.snapRef){B.snapRef=gs;applySnap(G,gs)}}
+  return}
  if(B.mode==='cpu'){stepGame(G,[LI,cpuThink(G,1,B.ai)]);processEvents(G)}
  else if(B.mode==='host'){
   const ok=netOpen();
@@ -1133,7 +1144,7 @@ function onMatchEnd(G){
  const cn=document.createElement('div');cn.className='muted';cn.textContent=`所持コイン ${S.data.coins}`;
  c.append(h,m,cn);
  const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=t;b.onclick=fn;c.appendChild(b)};
- if(B.mode==='cpu'){mk('もう一回','grn',()=>{const lv=B.ai.lvKey;startBattle('cpu',B.looks,{lv})});mk('ホームへ','wht',quitBattle)}
+ if(B.mode==='cpu'){mk('もう一回','grn',()=>{const lv=B.ai.lvKey;startBattle('cpu',B.looks,{lv,noVs:true})});mk('ホームへ','wht',quitBattle)}
  else if(B.mode==='host'){mk('再戦する','grn',()=>{if(!netOpen()){toast('相手がいません');return}B.G=newGame(B.looks);B.lastEv=0;B.fx=[];$('#bover').style.display='none'});mk('ぬける','wht',quitBattle)}
  else{const w=document.createElement('div');w.className='muted';w.textContent='ホストが再戦を選ぶと始まるよ';c.appendChild(w);mk('ぬける','wht',quitBattle)}
  $('#bover').style.display='flex';
@@ -1148,8 +1159,72 @@ function bar(g,x,y,w,h,v,col,rev,bg='#2a1018',trail){
  px(g,rev?x+w-fw:x,y,fw,h,col);if(fw>1)px(g,rev?x+w-fw:x,y,fw,1,shade(col,1.3).replace('#',"#"));
 }
 function T(str,x,y,size,col,align='center',jp){cx.font=`${Math.round(size*DS)}px ${jp?'"DotGothic16"':'"Press Start 2P"'}`;cx.textAlign=align;cx.textBaseline='middle';cx.lineJoin='round';cx.lineWidth=Math.max(2,size*DS*.28);cx.strokeStyle='#14081e';cx.strokeText(str,x*DS,y*DS);cx.fillStyle=col;cx.fillText(str,x*DS,y*DS)}
+/* ===== 試合開始のVS画面 ===== */
+const VS_LEN=170,VS_HIT=26;
+function drawVS(){
+ const V=VW,t=B.vsT,fr=B.fr||0;
+ cx.setTransform(DS,0,0,DS,0,0);
+ const ease=x=>1-Math.pow(1-clamp(x,0,1),3);
+ const k=ease(t/22),out=B.vs<14?ease(1-B.vs/14):0;
+ // 背景
+ const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a0828');g.addColorStop(1,'#07030f');cx.fillStyle=g;cx.fillRect(0,0,V,H);
+ cx.save();cx.globalAlpha=.85;
+ const tilt=24;
+ cx.fillStyle='#7a0f2a';cx.beginPath();cx.moveTo(0,0);cx.lineTo(V/2+tilt-8,0);cx.lineTo(V/2-tilt-8,H);cx.lineTo(0,H);cx.fill();
+ cx.fillStyle='#0f2a7a';cx.beginPath();cx.moveTo(V,0);cx.lineTo(V/2+tilt+8,0);cx.lineTo(V/2-tilt+8,H);cx.lineTo(V,H);cx.fill();
+ cx.restore();
+ // 流れる線
+ cx.globalAlpha=.18;cx.fillStyle='#ffffff';
+ for(let i=0;i<14;i++){const y=(i*37+fr*(i%2?3:-3))%(H+40)-20;const x0=i<7?0:V/2+12;cx.fillRect(x0+((i*53)%60),(y+H+40)%(H+40)-20,V/2-30,1)}
+ cx.globalAlpha=1;
+ // ネオンの格子
+ cx.strokeStyle='rgba(200,80,255,.25)';cx.lineWidth=.5;for(let x=0;x<V;x+=16){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke()}
+ // 顔
+ const HS=Math.round(H*.7);
+ const face=(lk,cxp,cy,flip)=>{
+  cx.save();cx.translate(cxp,cy);if(flip)cx.scale(-1,1);
+  cx.globalAlpha=.35;cx.fillStyle=flip?'#5a8aff':'#ff4a6a';cx.beginPath();cx.arc(0,0,HS*.52,0,Math.PI*2);cx.fill();cx.globalAlpha=1;
+  if(lk.photo&&lk.photo.complete&&lk.photo.naturalWidth){cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';cx.drawImage(lk.photo,-HS/2,-HS/2,HS,HS)}
+  else{cx.imageSmoothingEnabled=false;cx.drawImage(lk.fcv,-HS*.42,-HS*.42,HS*.84,HS*.84)}
+  cx.imageSmoothingEnabled=false;cx.restore();
+ };
+ const off=(1-k)*V*.6+out*V*.6;
+ face(B.looks[0],V*.25-off,H*.42,false);
+ face(B.looks[1],V*.75+off,H*.42,true);
+ // 下の帯
+ const by=H*.74;
+ cx.fillStyle='rgba(0,0,0,.6)';cx.fillRect(0,by,V,H-by);
+ cx.fillStyle='#c01840';cx.beginPath();cx.moveTo(-off,by+4);cx.lineTo(V*.46-off,by+4);cx.lineTo(V*.42-off,by+26);cx.lineTo(-off,by+26);cx.fill();
+ cx.fillStyle='#1840c0';cx.beginPath();cx.moveTo(V+off,by+4);cx.lineTo(V*.54+off,by+4);cx.lineTo(V*.58+off,by+26);cx.lineTo(V+off,by+26);cx.fill();
+ cx.fillStyle='#ffd83a';cx.fillRect(0,by,V,1);
+ // VSロゴ
+ const vk=t<VS_HIT?0:ease((t-VS_HIT)/8);
+ cx.setTransform(1,0,0,1,0,0);
+ const MS=V<W?.82:1;
+ if(t>=VS_HIT-6){
+  const sc=t<VS_HIT?3:1+2*(1-vk);const a=t<VS_HIT?(t-(VS_HIT-6))/6:1;
+  cx.save();cx.globalAlpha=a*(1-out);cx.translate(V/2*DS,H*.42*DS);cx.scale(sc,sc);cx.rotate(-.12);
+  cx.font=`italic ${Math.round(46*MS*DS)}px "Press Start 2P"`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.shadowColor='#c050ff';cx.shadowBlur=18*DS;cx.lineWidth=5*DS;cx.strokeStyle='#d070ff';cx.strokeText('VS',0,0);
+  cx.shadowBlur=6*DS;cx.fillStyle='#ffffff';cx.fillText('VS',0,0);cx.restore();
+ }
+ cx.globalAlpha=1-out;
+ const L1=B.looks[0],L2=B.looks[1],r0=B.recs[0],r1v=B.recs[1];
+ T(L1.name,V*.2-off,by+15,12*MS,'#ffffff','center',1);
+ T(L2.name,V*.8+off,by+15,12*MS,'#ffffff','center',1);
+ const rec=r=>r?`${r[0]}勝 ${r[1]}敗`:'';
+ T(rec(r0),V*.2-off,by+33,6.5*MS,'#ffd83a','center',1);
+ T(r1v?rec(r1v):B.cpuLabel,V*.8+off,by+33,6.5*MS,'#ffd83a','center',1);
+ T(TYPES[L1.type]?TYPES[L1.type].name:'',V*.2-off,by-6,5.5*MS,'#ffb0c0','center',1);
+ T(TYPES[L2.type]?TYPES[L2.type].name:'',V*.8+off,by-6,5.5*MS,'#b0c8ff','center',1);
+ T('PARK STAGE',V/2,H-6,4*MS,'#d8c8ff');
+ T('PUNCH PARK',V/2,9,5*MS,'#ffd83a');
+ if(B.mode==='cpu'&&t>VS_HIT+10&&(fr>>4)%2)T('タップでスキップ',V/2,H*.66,5*MS,'#ffffffaa','center',1);
+ cx.globalAlpha=1;
+ if(t>=VS_HIT&&t<VS_HIT+6){cx.fillStyle=`rgba(255,255,255,${(VS_HIT+6-t)/8})`;cx.fillRect(0,0,cv.width,cv.height)}
+}
 function render(){
- if(!B)return;const G=B.G,fr=B.fr||0;
+ if(!B)return;{const ph=B.vs>0;if(ph!==B._ph){B._ph=ph;$('#pad').style.visibility=ph?'hidden':''}}if(B.vs>0){drawVS();return}const G=B.G,fr=B.fr||0;
  cx.setTransform(DS,0,0,DS,0,0);cx.imageSmoothingEnabled=false;
  const sx=B.shake?Math.round((rnd()-.5)*Math.min(4,B.shake)):0,sy=B.shake?Math.round((rnd()-.5)*Math.min(3,B.shake)):0;
  const V=VW;const mx=(G.f[0].x+G.f[1].x)/2;const tc=clamp(mx-V/2,0,W-V);camX=B.mode==='guest'||Math.abs(tc-camX)>40?tc:camX+(tc-camX)*.2;if(V===W)camX=0;const ox=-Math.round(camX);
@@ -1218,6 +1293,7 @@ document.querySelectorAll('.pb').forEach(el=>{
  el.addEventListener('contextmenu',e=>e.preventDefault());
 });
 // バトル画面はどこを触ってもズームしない（結果画面のボタン以外）
+$('#bwrap').addEventListener('pointerdown',()=>{if(B&&B.mode==='cpu'&&B.vs>0&&B.vsT>VS_HIT+10)B.vs=1});
 $('#scr-battle').addEventListener('touchstart',e=>{if(!(e.target.closest&&e.target.closest('#bover')))e.preventDefault()},{passive:false});
 const KM={ArrowLeft:'l',KeyA:'l',ArrowRight:'r',KeyD:'r',KeyJ:'a',KeyK:'b',KeyL:'g',KeyI:'s',KeyU:'s',KeyO:'c',ArrowUp:'u',KeyW:'u',Space:'u'};
 addEventListener('keydown',e=>{if(cur!=='battle')return;const k=KM[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;press(k,1)});
@@ -1281,7 +1357,7 @@ async function joinRoom(code){
   setOStat(e.type==='peer-unavailable'?'へや #'+code+' が見つからなかった。コードを確認してね':'通信エラー（'+e.type+'）。もう一回ためしてね');clearTimeout(N.joinT)});
  clearTimeout(N.joinT);N.joinT=setTimeout(()=>{if(N.role==='g'&&!B){setOStat('つながらなかった…相手と同じWi-Fiにするか、もう一回ためしてね');netLeave()}},15000);
 }
-function packFull(ch){return {n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.photo||undefined}}
+function packFull(ch){return {w:S.data.wins|0,l:S.data.losses|0,n:ch.name,ty:ch.type,fc:ch.photo?undefined:ch.face,of:ch.outfit,sk:ch.skin||undefined,ph:ch.photo||undefined}}
 // 写真は大きいので12KBずつ分けて送る（iPhoneは大きいメッセージを送れない）
 function sendLook(conn){const ch=packFull(S.data.char);const ph=ch.ph;delete ch.ph;const CH=12000,n=ph?Math.ceil(ph.length/CH):0;
  try{conn.send({t:'hello',ch,pn:n});for(let i=0;i<n;i++)conn.send({t:'ph',i,n,d:ph.slice(i*CH,(i+1)*CH)})}catch(e){}}
